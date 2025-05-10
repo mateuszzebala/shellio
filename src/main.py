@@ -1,22 +1,28 @@
-from typing import Literal, Any
+from typing import Literal
 import pty
 import os
 import subprocess
 from threading import Thread
+from collections import defaultdict
 import time
 from queue import Queue, Empty
-from codes import TERMINAL_CODES, SPECIAL_KEYS
+import re
+import atexit
 
 Shells = Literal["sh", "bash", "zsh"]
 
 class ShellIO:
+    
+    shells: list['ShellIO'] = []
+    
     def __init__(self, shell_type: Shells, args: list[str]) -> None:
         self.shell_type: Shells = shell_type
         self.args: list[str] = args
         self.program = [self.shell_type, *self.args]
         self.line_queue = Queue()
-        self.commands: Commands = Commands(self)
+        self.events = defaultdict(list)
         self.cwd = None
+        self.shells.append(self)
     
     def set_cwd(self, path: str) -> None:
         self.cwd = path
@@ -36,8 +42,8 @@ class ShellIO:
         if self.shell_type == 'bash':
             args = ['--rcfile', '~/.bashrc', '--login']
         elif self.shell_type == 'sh':
-            args = ['-i', '--login', '--init-file', '~/.bashrc', ]
-            env["PS1"] = "sh$ "
+            args = []
+            env["PS1"] = "$ "
         elif self.shell_type == 'zsh':
             args = ['--interactive']
         else:
@@ -51,7 +57,7 @@ class ShellIO:
             stdout=self.slave,
             stderr=self.slave,
             text=False,
-            shell=True,
+            shell=False,
             bufsize=0,
             cwd=self.cwd,
             env=env,
@@ -61,10 +67,9 @@ class ShellIO:
         self.thread.daemon = True
         self.thread.start()
         
-    def put(self, stdin: str) -> 'Commands':
+    def put(self, stdin: str) -> None:
         os.write(self.master, stdin.encode())
-        return self.commands
-    
+        
     def get(self, timeout: float = 0.1):
         output = b""
         while True:
@@ -74,44 +79,40 @@ class ShellIO:
                 break
         return output.decode(errors="replace")
     
-    def get_output(self, timeout: float = 0.1) -> list[tuple[str | None, str]]:
+    def get_output(self, timeout: float = 0.1) -> list[bytes]:
         output = b""
         while True:
             try:
                 output += self.line_queue.get(timeout=timeout)
             except Empty:
                 break
-        return ShellIO.recognize(output)
+  
+        return ShellIO.split_bytes_ansi(output)
     
     @staticmethod
-    def recognize(output: bytes):
-        result = []
-        text = output.decode(errors='ignore')
-        i = 0
-        sorted_codes = sorted(TERMINAL_CODES.items(), key=lambda kv: -len(kv[1])) 
-
-        while i < len(text):
-            matched = False
-            for name, seq in sorted_codes:
-                if text.startswith(seq, i):
-                    result.append((name, seq))
-                    i += len(seq)
-                    matched = True
-                    break
-            if not matched:
-                result.append((None, text[i]))
-                i += 1
-        return result
-
-
-class Commands:
-    def __init__(self, shell: ShellIO):
-        self.shell = shell
-    
-    def window_size(self, width: int, height: int):
-        ...
-    
-    def enter(self):
-        self.shell.put(SPECIAL_KEYS['ENTER'])
+    def split_bytes_ansi(data: bytes) -> list[bytes]:
+        ansi_pattern = re.compile(rb'\x1b\[[0-9;?]*[a-zA-Z]')
         
+        result = []
+        i = 0
+        while i < len(data):
+            match = ansi_pattern.match(data, i)
+            if match:
+                result.append(match.group())
+                i = match.end()
+            else:
+                result.append(data[i:i+1])
+                i += 1
+        
+        return result
+    
+    @staticmethod
+    def kill_all_shells():
+        for shell in ShellIO.shells:
+            if shell.process.poll() is None:
+                shell.process.terminate()
+    
+atexit.register(ShellIO.kill_all_shells)
+
+
         
