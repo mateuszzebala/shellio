@@ -3,7 +3,6 @@ import pty
 import os
 import subprocess
 from threading import Thread
-from collections import defaultdict
 import time
 from queue import Queue, Empty
 import re
@@ -20,7 +19,6 @@ class ShellIO:
         self.args: list[str] = args
         self.program = [self.shell_type, *self.args]
         self.line_queue = Queue()
-        self.events = defaultdict(list)
         self.cwd = None
         self.shells.append(self)
     
