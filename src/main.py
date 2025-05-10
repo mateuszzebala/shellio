@@ -68,16 +68,7 @@ class ShellIO:
     def put(self, stdin: str) -> None:
         os.write(self.master, stdin.encode())
         
-    def get(self, timeout: float = 0.1):
-        output = b""
-        while True:
-            try:
-                output += self.line_queue.get(timeout=timeout)
-            except Empty:
-                break
-        return output.decode(errors="replace")
-    
-    def get_output(self, timeout: float = 0.1) -> list[bytes]:
+    def get(self, timeout: float = 0.1) -> list[bytes]:
         output = b""
         while True:
             try:

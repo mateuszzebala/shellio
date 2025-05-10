@@ -52,7 +52,7 @@ time.sleep(2)
 shell.put('touch works.txt\n')
 
 # Read all bytes from shell and save it to a file
-for b in shell.get_output(timeout=0.01):
+for b in shell.get(timeout=0.01):
     print(b.decode(), end='')
     with open('output.txt', 'a') as file:
         file.write(b.decode())
