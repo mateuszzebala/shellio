@@ -28,7 +28,6 @@ $ pip install shellio
 ```py
 
 from shellio import ShellIO
-import time
 
 # Initialize a new shell object
 shell = ShellIO('bash', []) # zsh, sh or bash
@@ -46,7 +45,7 @@ open('output.txt', 'w').close()
 shell.put('ls -la\n')
 
 # Wait a second for output
-time.sleep(2)
+shell.wait(2)
 
 # Put the second command
 shell.put('touch works.txt\n')

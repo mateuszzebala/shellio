@@ -1,1 +1,4 @@
-from main import ShellIO
+from .shellio import ShellIO
+
+__all__ = ["ShellIO"]
+
