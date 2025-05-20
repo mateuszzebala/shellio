@@ -55,6 +55,6 @@ for b in shell.get(timeout=0.01):
     print(b.decode(), end='')
     with open('output.txt', 'a') as file:
         file.write(b.decode())
-            
+
 ```
 

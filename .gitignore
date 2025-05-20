@@ -1,4 +1,7 @@
 venv
+.venv
+conda
 .conda
 __pycache__
+.env
 

@@ -16,9 +16,9 @@ class ShellIO:
     (sh, bash, zsh) through a pseudoterminal (PTY), allowing real-time command
     execution and output parsing.
     """
-    
+
     shells: list['ShellIO'] = []
-    
+
     def __init__(self, shell_type: Shells, args: list[str] = None) -> None:
         """
         Initialize a ShellIO instance with specified shell type and arguments.
@@ -33,7 +33,7 @@ class ShellIO:
         self.line_queue = Queue()
         self.cwd = None
         self.shells.append(self)
-    
+
     def set_cwd(self, path: str) -> None:
         """
         Set the current working directory for the shell process.
@@ -44,37 +44,37 @@ class ShellIO:
         """
         if hasattr(self, 'process') and self.process is not None:
             raise RuntimeError("Cannot set working directory after shell is running.")
-    
+
         if not os.path.isdir(path):
             raise ValueError(f"Invalid directory: {path}")
-        
+
         self.cwd = path
-    
+
     def enqueue_output(self, queue: Queue) -> None:
         while True:
             out = os.read(self.master, 128)
             if not out: time.sleep(0.6)
             else: queue.put(out)
-            
+
     def clear(self):
         try:
             while True:
                 self.line_queue.get(False)
         except Empty:
             pass
-        
+
     def wait(self, seconds: float):
         time.sleep(seconds)
-    
+
     def run(self) -> None:
         """
         Start the shell process with a pseudoterminal and begin reading output
         in a background thread.
         """
         args = []
-        
+
         env = os.environ.copy()
-            
+
         if self.shell_type == 'bash':
             args = ['--rcfile', '~/.bashrc']
         elif self.shell_type == 'sh':
@@ -84,7 +84,7 @@ class ShellIO:
             args = ['--interactive']
         else:
             raise Exception('Shell should be sh, bash or zsh')
-        
+
         self.program = [self.shell_type, *args, *self.args]
         self.master, self.slave = pty.openpty()
         self.process = subprocess.Popen(
@@ -102,7 +102,7 @@ class ShellIO:
         self.thread = Thread(target=self.enqueue_output, args=(self.line_queue,))
         self.thread.daemon = True
         self.thread.start()
-        
+
     def put(self, stdin: str) -> None:
         """
         Send input to the shell.
@@ -111,7 +111,7 @@ class ShellIO:
             stdin (str): Input string to write to shell (append '\n' if needed).
         """
         os.write(self.master, stdin.encode())
-        
+
     def get(self, timeout: float = 0.1) -> list[bytes]:
         """
         Read raw output and return as a list of bytes chunks,
@@ -129,9 +129,9 @@ class ShellIO:
                 output += self.line_queue.get(timeout=timeout)
             except Empty:
                 break
-  
+
         return ShellIO.split_bytes_ansi(output)
-    
+
     @staticmethod
     def split_bytes_ansi(data: bytes) -> list[bytes]:
         """
@@ -143,9 +143,9 @@ class ShellIO:
         Returns:
             list[bytes]: Separated normal bytes and ANSI codes.
         """
-        
+
         ansi_pattern = re.compile(rb'\x1b\[[0-9;?]*[a-zA-Z]')
-        
+
         result = []
         i = 0
         while i < len(data):
@@ -156,10 +156,10 @@ class ShellIO:
             else:
                 result.append(data[i:i+1])
                 i += 1
-        
+
         return result
-    
-        
+
+
 @atexit.register
 def kill_all_shells():
     for shell in ShellIO.shells:
