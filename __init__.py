@@ -1,3 +1,3 @@
-from src.shellio import ShellIO
+from shellio import ShellIO
 
 __all__ = ['ShellIO']

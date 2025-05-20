@@ -4,4 +4,6 @@ conda
 .conda
 __pycache__
 .env
-
+dist/**
+build/**
+shellio.egg-info
