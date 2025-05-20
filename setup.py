@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.0.2",
     author="Mateusz Zębala",
     author_email="mateusz.zebala.pl@gmail.com",
-    description="ShellIO",
+    description="ShellIO is a Python interface for interacting with Unix-like shells",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mateuszzebala/shellio",
