@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="shellio",
-    version="0.0.1",
+    version="0.0.2",
     author="Mateusz Zębala",
     author_email="mateusz.zebala.pl@gmail.com",
     description="ShellIO",
