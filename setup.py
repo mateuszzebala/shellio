@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="shellio",
-    version="0.0.3",
+    version="1.0.0",
     author="Mateusz Zębala",
     author_email="mateusz.zebala.pl@gmail.com",
     description="ShellIO is a Python interface for interacting with Unix-like shells",
